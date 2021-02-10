@@ -9,6 +9,9 @@ public class SponsorPayer {
     private String entityRelationshipCode;
     private String entityIdCode2;
 
+    public SponsorPayer(){
+    }
+
     public SponsorPayer(String entityIdCode, String name, String idCodeQualifier, String idCode, String entityRelationshipCode, String entityIdCode2){
         this.entityIdCode = entityIdCode;
         this.name = name;
