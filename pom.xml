@@ -24,11 +24,10 @@
     		<artifactId>hapi-fhir-structures-r4</artifactId>
     		<version>5.2.1</version>
 		</dependency>
-
 		<dependency>
     		<groupId>com.imsweb</groupId>
     		<artifactId>x12-parser</artifactId>
-    		<version>1.11</version>
+    		<version>1.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
