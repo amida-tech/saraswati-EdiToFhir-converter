@@ -62,7 +62,6 @@ public class X12BillingProvider {
             if (address != null) {
                 organization.setAddress(Arrays.asList(address));
             }
-
             return organization;
         }
         return null;
