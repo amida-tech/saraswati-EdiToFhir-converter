@@ -17,6 +17,7 @@ public class MemberLevelDetail {
     private String studentStatusCode;
     private String responseCode2;
     private Dtp dtp;
+    private Ref ref;
     private String confidentialityCode;
     private Address address;
     private String countryCode;
@@ -47,11 +48,11 @@ public class MemberLevelDetail {
         this.maintenanceTypeCode = maintenanceTypeCode;
     }
 
-    public String getMaintenanaceReasonCode() {
+    public String getMaintenanceReasonCode() {
         return this.maintenanaceReasonCode;
     }
 
-    public void setMaintenanaceReasonCode(String maintenanaceReasonCode) {
+    public void setMaintenanceReasonCode(String maintenanaceReasonCode) {
         this.maintenanaceReasonCode = maintenanaceReasonCode;
     }
 
@@ -175,6 +176,12 @@ public class MemberLevelDetail {
         this.number = number;
     }
 
-    
+    public Ref getRef(){
+        return ref;
+    }
+
+    public void setRef(Ref ref){
+        this.ref = ref;
+    }
 
 }

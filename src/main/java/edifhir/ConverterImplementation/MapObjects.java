@@ -8,6 +8,7 @@ import com.imsweb.x12.Element;
 
 import org.hl7.fhir.r4.model.*;
 import ca.uhn.fhir.*;
+import ch.qos.logback.core.joran.conditional.ElseAction;
 import edifhir.model.Dtp;
 import edifhir.model.HealthCoverage;
 import edifhir.model.MemberLevelDetail;
@@ -85,10 +86,41 @@ public class MapObjects {
 
     public MemberLevelDetail member(X12 x12File){
         final String memberLoopId = "2000";
-        final String segN1Id = "N1";
+        final String segINSId = "INS";
+        final String segRefId = "REF";
+        final String segDtpId = "DTP";
         List<Loop> memberLoop = x12File.findLoop(memberLoopId);
         MemberLevelDetail member = new MemberLevelDetail(); 
         
+        /*
+            Loop through all existing loops and segment
+            and map to appropriate pojo
+        */
+        for(Loop loop : memberLoop){
+            for(Segment segment : loop){
+                if(segment.getId().equals(segINSId)){
+                    //Address address = new Address(segment.getElementValue("INS01"), segment.getElementValue("INS01"));
+                    member.setResponse(segment.getElementValue("INS01"));
+                    member.setIndividualRelationshipCode(segment.getElementValue("INS02"));
+                    member.setMaintenanceTypeCode(segment.getElementValue("INS03"));
+                    member.setMaintenanceReasonCode(segment.getElementValue("INS04"));
+                    member.setBenefitStatusCode(segment.getElementValue("INS05"));
+                    member.setMedicarePlanCode(segment.getElementValue("INS06"));
+                    member.setEligibilityReasonCode(segment.getElementValue("INS06-2"));
+                    member.setEmploymentStatusCode(segment.getElementValue("INS08"));
+                    member.setStudentStatusCode(segment.getElementValue("INS09"));
+                    member.setResponseCode2(segment.getElementValue("INS10"));
+                } else if(segment.getId().equals(segRefId)){
+                    Ref ref = new Ref(segment.getElementValue("REF01"),segment.getElementValue("REF02"),segment.getElementValue("REF03"), segment.getElementValue("REF04"));
+                    member.setRef(ref);
+                } else if (segment.getId().equals(segDtpId)){
+                    Dtp dtp = new Dtp(segment.getElementValue("DTP01"),segment.getElementValue("DTP02"),segment.getElementValue("DTP03"));
+                    member.setDtp(dtp);
+                } else {
+                    //Do nothing for now
+                }
+            }
+        }
         
         return member;
     }
