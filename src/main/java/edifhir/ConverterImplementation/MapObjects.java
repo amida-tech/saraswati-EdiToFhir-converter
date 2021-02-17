@@ -7,7 +7,6 @@ import com.imsweb.x12.*;
 import com.imsweb.x12.Element;
 
 import org.hl7.fhir.r4.model.*;
-import ca.uhn.fhir.*;
 import ch.qos.logback.core.joran.conditional.ElseAction;
 import edifhir.model.Dtp;
 import edifhir.model.HealthCoverage;

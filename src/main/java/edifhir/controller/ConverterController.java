@@ -8,7 +8,6 @@ import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import com.imsweb.x12.*;
 import org.hl7.fhir.r4.model.*;
-import ca.uhn.fhir.*;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
