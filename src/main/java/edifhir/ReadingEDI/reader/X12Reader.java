@@ -22,13 +22,14 @@ import java.util.stream.Collectors;
 import edifhir.ReadingEDI.mapping.LoopDefinition;
 import edifhir.ReadingEDI.mapping.TransactionDefinition;
 import edifhir.ReadingEDI.mapping.SegmentDefinition;
-import edifhir.ReadingEDI.converters.ElementDefinition;
+import edifhir.ReadingEDI.mapping.ElementDefinition;
 import edifhir.ReadingEDI.mapping.TransactionDefinition.Usage;
 import edifhir.ReadingEDI.mapping.CompositeDefinition;
 import edifhir.ReadingEDI.mapping.SegmentDefinition;
 import edifhir.ReadingEDI.Loop;
 import edifhir.ReadingEDI.Segment;
 import edifhir.ReadingEDI.Separators;
+import edifhir.ReadingEDI.reader.LoopConfig;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
@@ -59,9 +60,9 @@ public class X12Reader {
      * All supported X12 file definitions
      */
     public enum FileType {
-        ANSI834_4010_X095("mapping/834.4010.X095.A1.xml"),
-        ANSI834_5010_X220v2("mapping/834.5010.X220.A1.v2.xml"),
-        ANSI834_5010_X220("mapping/834.5010.X220.A1.xml"),
+        ANSI834_4010_X095("resources/mapping/834.4010.X095.A1.xml"),
+        ANSI834_5010_X220v2("resources/mapping/834.5010.X220.A1.v2.xml"),
+        ANSI834_5010_X220("resources/mapping/834.5010.X220.A1.xml");
 
         private String _mapping;
 

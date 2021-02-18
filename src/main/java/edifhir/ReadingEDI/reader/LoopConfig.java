@@ -1,9 +1,9 @@
-package edifhir.reader;
+package edifhir.ReadingEDI.reader;
 
 import java.util.List;
 
-import edifhir.reader.mapping.SegmentDefinition;
-import edifhir.reader.mapping.TransactionDefinition.Usage;
+import edifhir.ReadingEDI.mapping.SegmentDefinition;
+import edifhir.ReadingEDI.mapping.TransactionDefinition.Usage;
 
 public class LoopConfig {
 

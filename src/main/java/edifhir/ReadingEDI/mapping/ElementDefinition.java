@@ -7,7 +7,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
 
-import com.imsweb.x12.mapping.TransactionDefinition.Usage;
+import edifhir.ReadingEDI.mapping.TransactionDefinition.Usage;
 
 @XStreamAlias("element")
 public class ElementDefinition {

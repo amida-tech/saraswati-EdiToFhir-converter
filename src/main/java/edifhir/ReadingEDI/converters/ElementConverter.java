@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015 Information Management Services, Inc.
  */
-package com.imsweb.x12.converters;
+package edifhir.ReadingEDI.converters;
 
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.converters.MarshallingContext;
@@ -9,7 +9,7 @@ import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
-import com.imsweb.x12.Element;
+import edifhir.ReadingEDI.Element;
 
 public class ElementConverter implements Converter {
 
