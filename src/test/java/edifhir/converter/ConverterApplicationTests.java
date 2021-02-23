@@ -6,19 +6,12 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 
-import com.imsweb.x12.*;
-import com.imsweb.x12.reader.*;
-//import com.imsweb.x12.reader.X12Reader.FileType;
 
 @SpringBootTest
 class ConverterApplicationTests {
 
-	@Test
-	public void create834File() throws IOException {
-		
-		
-		
-	}
 
 }
