@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * HealthCoverage maps directly to Loop 2300 in EDI 834
+ */
+
 public class HealthCoverage {
     
     public List<Coverage> createHealthCoverage(Loop coverage){
@@ -24,8 +29,19 @@ public class HealthCoverage {
             Coverage healthCoverage = new Coverage();
 
             String name = segment.getElementValue("HD02");
-            if (name != null && !name.isEmpty() && !names.contains(name)) {    
+            String insuranceLineCode = segment.getElementValue("HD03");
+            String planCovergaeDescription = segment.getElementValue("HD04");
+            String beginEndDate = segment.getElementValue("HD05");
+            String refIdHCPNum = segment.getElementValue("HD06");
+            String identifier = segment.getElementValue("HD07");
+            
+            if (segment.getElementValue() != null && !segment.getElementValue().isEmpty()) {    
                 healthCoverage.addChild(name);
+                healthCoverage.addChild(insuranceLineCode);
+                healthCoverage.addChild(planCovergaeDescription);
+                healthCoverage.addChild(beginEndDate);
+                healthCoverage.addChild(refIdHCPNum);
+                healthCoverage.addChild(identifier);
                 //names.add(name);
                 //result.add(contactComponent);
             }
