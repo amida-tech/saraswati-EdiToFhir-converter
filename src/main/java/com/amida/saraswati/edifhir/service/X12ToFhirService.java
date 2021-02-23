@@ -3,6 +3,7 @@ package com.amida.saraswati.edifhir.service;
 import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir834;
 import com.amida.saraswati.edifhir.model.fhir.Fhir835;
+import com.amida.saraswati.edifhir.model.fhir.Fhir837;
 
 import java.io.File;
 
@@ -24,18 +25,18 @@ public interface X12ToFhirService {
     /**
      * Converts the given x12-835 transaction file to a FHIR bundle, Fhir835.
      *
-     * @param x835file
+     * @param x835file x12-835 transaction file.
      * @return a Fhir835 object.
-     * @throws X12ToFhirException
+     * @throws X12ToFhirException error occurs.
      */
     Fhir835 get835FhirBundle(File x835file) throws X12ToFhirException;
 
     /**
      * Converts the given x12-837 transaction file to a FHIR bundle, Fhir837.
      *
-     * @param x837file
+     * @param x837file x837 transaction file.
      * @return a Fhir837 object.
-     * @throws X12ToFhirException
+     * @throws X12ToFhirException error occurs
      */
-    Fhir834 get837FhirBundle(File x837file) throws X12ToFhirException;
+    Fhir837 get837FhirBundle(File x837file) throws X12ToFhirException;
 }
