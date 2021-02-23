@@ -1,4 +1,4 @@
-package edifhir.ConverterImplementation;
+package edifhir.Model;
 
 import com.imsweb.x12.Loop;
 import com.imsweb.x12.Segment;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MapResources {
+public class HealthCoverage {
     
     public List<Coverage> createHealthCoverage(Loop coverage){
         List<Segment> segments =  coverage.findSegment("HD");
