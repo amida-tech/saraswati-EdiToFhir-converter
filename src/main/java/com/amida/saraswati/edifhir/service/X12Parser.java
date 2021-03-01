@@ -8,6 +8,8 @@ import java.util.List;
 /**
  * The interface defines the services for parsing EDI x12 stream to
  * a list of X12Transaction objects.
+ *
+ * @author Warren Lin
  */
 public interface X12Parser {
     List<X12Transaction> parse(Class x12Class, String message) throws X12ParseException;

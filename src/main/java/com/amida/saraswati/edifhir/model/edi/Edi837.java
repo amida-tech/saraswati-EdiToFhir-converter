@@ -1,6 +1,7 @@
 package com.amida.saraswati.edifhir.model.edi;
 
 import com.amida.saraswati.edifhir.model.HasEdi;
+import com.amida.saraswati.edifhir.model.edi.component.x837.*;
 import org.hl7.fhir.r4.model.Bundle;
 
 public class Edi837 extends X12Transaction implements HasEdi {
