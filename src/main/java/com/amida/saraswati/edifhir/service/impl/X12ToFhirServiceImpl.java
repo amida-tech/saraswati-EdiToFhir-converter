@@ -26,6 +26,9 @@ import java.util.List;
 @Slf4j
 public class X12ToFhirServiceImpl implements X12ToFhirService {
 
+    @Autowired
+    private X837Mapper x837Mapper;
+
     @Override
     public Fhir834 get834FhirBundle(File x834file) throws X12ToFhirException {
         return null;
@@ -41,7 +44,6 @@ public class X12ToFhirServiceImpl implements X12ToFhirService {
             throws X12ToFhirException, InvalidDataException {
         try {
             X12Reader x12Reader = new X12Reader(X12Reader.FileType.ANSI837_5010_X222, x837file);
-            X837Mapper x837Mapper = new X837Mapper();
             return x837Mapper.getFhirBundles(x12Reader);
         } catch (IOException e) {
             log.error("Failed to create X12Reader. for 837", e);
@@ -52,7 +54,6 @@ public class X12ToFhirServiceImpl implements X12ToFhirService {
     @Override
     public List<Fhir837> get837FhirBundles(X12Reader x12Reader)
             throws X12ToFhirException, InvalidDataException {
-        X837Mapper x837Mapper = new X837Mapper();
         return x837Mapper.getFhirBundles(x12Reader);
     }
 }

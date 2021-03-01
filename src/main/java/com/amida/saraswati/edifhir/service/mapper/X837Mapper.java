@@ -58,7 +58,7 @@ public class X837Mapper {
             throw new InvalidDataException("No 837 is found.");
         }
 
-        List<Pair<Fhir837, X12ToFhirException>> result = loop837s.stream()
+        List<Pair<Fhir837, X12ToFhirException>> result = loop837s.parallelStream()
                 .map(this::getFhir837).collect(Collectors.toList());
         Optional<Pair<Fhir837, X12ToFhirException>> bad =
                 result.stream().filter(p -> p.getRight() != null).findFirst();
@@ -104,22 +104,35 @@ public class X837Mapper {
                     .filter(l -> l.getId().equals(LOOP_2000B))
                     .collect(Collectors.toList());
 
-            List<Patient> subscribers = subscriberLoops.stream()
+            // map subscribers
+            List<Patient> subscribers = subscriberLoops.parallelStream()
                         .map(SubscriberMapper::mapSubscriber)
                         .collect(Collectors.toList());
             subscribers.forEach(result::addResource);
 
-            for (Loop loop2000b : subscriberLoops) {
-                List<Loop> claimLoops = loop2000b.getLoops().stream()
-                        .filter(l -> LOOP_2300.equals(l.getId()))
-                        .collect(Collectors.toList());
-                List<Claim> claims = claimLoops.stream()
-                        .map(ClaimMapper::mapClaim).collect(Collectors.toList());
-                claims.forEach(result::addResource);
-            }
+            // map claims
+            List<Claim> claims = subscriberLoops.parallelStream()
+                    .map(this::mapClaim2300Loop).flatMap(List::stream)
+                    .collect(Collectors.toList());
+            claims.forEach(result::addResource);
         }
         // TODO: map more segments.
         return Pair.of(result, null);
+    }
+
+    /**
+     * Gets a list of Claims from a X12Reader 2000B loop.
+     * Note: x12-parser put loop 2300(Claim Info) in loop 2000B.
+     * So we pull 2300 from a 2000B loop.
+     *
+     * @param loop2000b a X12Reader 2000B loop.
+     */
+    private List<Claim> mapClaim2300Loop(Loop loop2000b) {
+        List<Loop> claimLoops = loop2000b.getLoops().stream()
+                .filter(l -> LOOP_2300.equals(l.getId()))
+                .collect(Collectors.toList());
+        return claimLoops.parallelStream()
+                .map(ClaimMapper::mapClaim).collect(Collectors.toList());
     }
 
     private List<Loop> get837Loop(List<Loop> loops) {
