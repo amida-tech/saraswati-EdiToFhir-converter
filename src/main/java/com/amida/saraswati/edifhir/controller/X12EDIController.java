@@ -5,7 +5,6 @@ import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir837;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
 import com.amida.saraswati.edifhir.util.X12ParserUtil;
-import com.amida.saraswati.edifhir.util.X12Util;
 import com.imsweb.x12.reader.X12Reader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

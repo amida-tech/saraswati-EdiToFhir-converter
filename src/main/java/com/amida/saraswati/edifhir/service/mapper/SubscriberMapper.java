@@ -1,7 +1,9 @@
 /* warren created on 2/25/21 inside the package - com.amida.saraswati.edifhir.service.mapper */
 package com.amida.saraswati.edifhir.service.mapper;
 
-import com.amida.saraswati.edifhir.model.edi.component.x837.segment.*;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.DMG837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.NM1837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.SBR837;
 import com.amida.saraswati.edifhir.util.X12Util;
 import com.imsweb.x12.Loop;
 import com.imsweb.x12.Segment;
@@ -12,8 +14,6 @@ import org.hl7.fhir.r4.model.*;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Maps an X12 2000B loop for subscriber to a FHIR Patient resource.

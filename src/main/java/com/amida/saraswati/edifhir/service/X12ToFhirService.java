@@ -51,8 +51,8 @@ public interface X12ToFhirService {
      *
      * @param x12Reader A X12Reader containing a x12-837 .
      * @return a set of Fhir837
-     * @throws X12ToFhirException
-     * @throws InvalidDataException
+     * @throws X12ToFhirException error occurs.
+     * @throws InvalidDataException x12 transaction data in X12Reader is invalid.
      */
     List<Fhir837> get837FhirBundles(X12Reader x12Reader) throws X12ToFhirException, InvalidDataException;
 
