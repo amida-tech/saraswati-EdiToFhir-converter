@@ -25,14 +25,14 @@ import java.util.stream.Collectors;
  */
 
 @RestController
-@RequestMapping(value = "/edi/v1")
+@RequestMapping(value = "/")
 @Slf4j
 public class X12EDIController {
 
     @Autowired
     private X12ToFhirService service;
 
-    @GetMapping("/x12loop")
+    @PostMapping("/x12loop")
     public ResponseEntity<String> getX12Loops(
             @RequestBody String x12Data,
             @RequestHeader boolean showSegment)
@@ -52,7 +52,7 @@ public class X12EDIController {
         }
     }
 
-    @GetMapping("/x12ToFhir")
+    @PostMapping("/x12ToFhir")
     public ResponseEntity<String> getEdi837ToFhir(@RequestBody String x12Data) {
         log.info("x12ToFhir");
         try {
@@ -76,5 +76,10 @@ public class X12EDIController {
             log.error("FHIR conversion failed. {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/healthy")
+    public ResponseEntity<String> healthy() {
+        return ResponseEntity.ok("I'm good.");
     }
 }
