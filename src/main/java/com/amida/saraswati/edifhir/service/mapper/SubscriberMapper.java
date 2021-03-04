@@ -23,8 +23,12 @@ import java.util.Date;
 @Slf4j
 public class SubscriberMapper {
 
+    private static final String CLAIM_FILING_TYPE_URL = "x12-837/claimfilingtype";
+    private static final String SUBSCRIBER_RELATION_URL = "x12-837/subscriberrelation";
+
     public static Patient mapSubscriber(Loop loop2000B) {
         Patient subscriber = getSubscriberInfo(loop2000B);
+        subscriber.setId(loop2000B.getId());
 
         Segment pat = loop2000B.getSegment("PAT");
         // TODO: map patient when pat is available.
@@ -46,6 +50,7 @@ public class SubscriberMapper {
 
     public static Patient mapPatient(Loop loop2000C) {
         Patient patient = new Patient();
+        patient.setId(loop2000C.getId());
         // TODO: to be finished.
         return patient;
     }
@@ -63,10 +68,12 @@ public class SubscriberMapper {
         ext.setValue(insPolicyInfo);
         ext = subscriber.addExtension();
         ext.setId("subscriber relation");
+        ext.setUrl(SUBSCRIBER_RELATION_URL);
         CodeType relation = new CodeType(sbr837.getPayerResponsibility() + ":" + sbr837.getRelationShip());
         ext.setValue(relation);
         ext = subscriber.addExtension();
         ext.setId("Claim Filing Type");
+        ext.setUrl(CLAIM_FILING_TYPE_URL);
         CodeType filingType = new CodeType(sbr837.getClaimFilingId());
         ext.setValue(filingType);
 

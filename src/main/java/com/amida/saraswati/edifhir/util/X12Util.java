@@ -1,11 +1,16 @@
 package com.amida.saraswati.edifhir.util;
 
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.DTP837;
 import com.amida.saraswati.edifhir.model.edi.component.x837.segment.NM1837;
-import com.imsweb.x12.Loop;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.PER837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.REF837;
+import com.amida.saraswati.edifhir.model.x12helper.ClaimReferences;
+import com.amida.saraswati.edifhir.model.x12helper.ClaimRelatedDates;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.ContactPoint.ContactPointSystem;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,10 +40,10 @@ public class X12Util {
     }
 
     /**
-     * Maps a NM1 segment to FHIR HumanName.
+     * Maps a NM1 segment to FHIR {@link HumanName}.
      *
      * @param nm an X12 NM1 segment.
-     * @return HumnanName.
+     * @return {@link HumanName}.
      */
     public static HumanName getHumanName(NM1837 nm) {
         HumanName humanName = new HumanName();
@@ -57,6 +62,35 @@ public class X12Util {
                     .setId(nm.getIdCode());
         }
         return humanName;
+    }
+
+    public static HumanName getHumanName(PER837 per) {
+        HumanName humanName = new HumanName();
+        humanName.setText(per.getName()).setId(per.getPer01());
+        return humanName;
+    }
+
+    public static List<ContactPoint> getContactNumbers(PER837 per837) {
+        List<ContactPoint> contacts = new ArrayList<>();
+        String contactNumber = per837.getContactNumber1();
+        String contactType = per837.getFhirContactPointCode1();
+        if (contactNumber != null) {
+            contacts.add(new ContactPoint().setValue(contactNumber)
+                    .setSystem(ContactPointSystem.fromCode(contactType)));
+        }
+        contactNumber = per837.getContactNumber2();
+        if (contactNumber != null) {
+            contactType = per837.getFhirContactPointCode2();
+            contacts.add(new ContactPoint().setValue(contactNumber)
+                    .setSystem(ContactPointSystem.fromCode(contactType)));
+        }
+        contactNumber = per837.getContactNumber3();
+        if (contactNumber != null) {
+            contactType = per837.getFhirContactPointCode3();
+            contacts.add(new ContactPoint().setValue(contactNumber)
+                    .setSystem(ContactPointSystem.fromCode(contactType)));
+        }
+        return contacts;
     }
 
     /**
@@ -87,5 +121,116 @@ public class X12Util {
         CodeableConcept concept = new CodeableConcept();
         concept.setText(value).setId(code);
         return concept;
+    }
+
+    public static Reference getReference(String id, String type) {
+        Reference ref = new Reference();
+        ref.setId(id);
+        ref.setReference(type + "/" + id);
+        ref.setType(type);
+        return ref;
+    }
+
+    public static Reference getPatientReference(String id) {
+        String type = "Patient";
+        return getReference(id, type);
+    }
+
+    /**
+     * Populates {@link ClaimRelatedDates} with the given {@link DTP837} list
+     *
+     * @param dtps a list of DTP segments.
+     * @return a {@link ClaimRelatedDates}
+     */
+    public static ClaimRelatedDates getClaimRelateddDates(List<DTP837> dtps) {
+        if (dtps.isEmpty()) {
+            return null;
+        }
+        ClaimRelatedDates dates = new ClaimRelatedDates();
+        dtps.forEach(d -> updateClaimRelatedDates(dates, d));
+        return dates;
+    }
+
+    private static void updateClaimRelatedDates(ClaimRelatedDates dates, DTP837 dtp) {
+        if (dtp.hasValidCode()) {
+            switch (dtp.getDateTimeQualifier()) {
+                case "523":
+                    dates.setOriginalCreationDate(dtp.getDate());
+                    break;
+                case "431":
+                    dates.setIllnessStartDate(dtp.getDate());
+                    break;
+                case "454":
+                    dates.setTreatmentStartDate(dtp.getDate());
+                    break;
+                case "304":
+                    dates.setLastSeenDate(dtp.getDate());
+                    break;
+                case "439":
+                    dates.setAccidentDate(dtp.getDate());
+                    break;
+                case "484":
+                    dates.setLastMensPeriodDate(dtp.getDate());
+                    break;
+                case "455":
+                    dates.setLastXRayDate(dtp.getDate());
+                    break;
+                case "471":
+                    dates.setPrescriptionDate(dtp.getDate());
+                    break;
+                case "360":
+                    dates.setDisabilityDate(dtp.getDate());
+                    break;
+                case "297":
+                    dates.setLastWorkedDate(dtp.getDate());
+                    break;
+                case "296":
+                    dates.setAuthorizedReturnWorkDate(dtp.getDate());
+                    break;
+                case "435":
+                    dates.setAdmissionDate(dtp.getDate());
+                    break;
+                case "096":
+                    dates.setDischargeDate(dtp.getDate());
+                    break;
+                case "090":
+                    dates.setAssumedCareDate(dtp.getDate());
+                    break;
+                case "091":
+                    dates.setRelinguishedCareDate(dtp.getDate());
+                    break;
+                case "444":
+                    dates.setPNc1stContactDate(dtp.getDate());
+                case "050":
+                    dates.setRepricedReceivedDate(dtp.getDate());
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    public static void updateClaimReferences(ClaimReferences references, REF837 ref) {
+        if (ref.isValid()) {
+            switch (ref.getQualifier()) {
+                case "G3":
+                    references.setPredetermineId(ref.getId());
+                    break;
+                case "F5":
+                    references.setMedicareVersionCode(ref.getId());
+                    break;
+                case "EW":
+                    references.setMammgrphyCertNo(ref.getId());
+                    break;
+                case "9F":
+                    references.setReferalNumber(ref.getId());
+                    break;
+                case "D9":
+                    references.setClaimNumber(ref.getId());
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }

@@ -41,9 +41,9 @@ public class X12EDIController {
             log.info("x12loop showSegment: {}", showSegment);
             X12Reader reader = new X12Reader(X12Reader.FileType.ANSI837_5010_X222,
                     new ByteArrayInputStream(x12Data.getBytes()));
-            if (!reader.getErrors().isEmpty()) {
-                reader.getErrors().forEach(log::error);
-                return ResponseEntity.badRequest().body(reader.getErrors().get(0));
+            reader.getErrors().forEach(log::error);
+            if (!reader.getFatalErrors().isEmpty()) {
+                return ResponseEntity.badRequest().body(reader.getFatalErrors().get(0));
             }
             String result = X12ParserUtil.loopTravise(reader.getLoops(), 1, showSegment);
             return ResponseEntity.ok(result);
@@ -58,11 +58,11 @@ public class X12EDIController {
         try {
             X12Reader reader = new X12Reader(X12Reader.FileType.ANSI837_5010_X222,
                     new ByteArrayInputStream(x12Data.getBytes()));
-            if (!reader.getErrors().isEmpty()) {
-                log.error("Invalid EDI X12 837 data {}. {}",
-                        reader.getErrors().size(), reader.getErrors().get(0));
-                reader.getErrors().forEach(log::error);
-                return ResponseEntity.badRequest().body(reader.getErrors().get(0));
+            log.error("Invalid EDI X12 837 data {}. {}",
+                    reader.getErrors().size(), reader.getErrors().get(0));
+            reader.getErrors().forEach(log::error);
+            if (!reader.getFatalErrors().isEmpty()) {
+                return ResponseEntity.badRequest().body(reader.getFatalErrors().get(0));
             }
             List<Fhir837> result = service.get837FhirBundles(reader);
             String json = "{\n \"bundles\": [ " +
@@ -74,7 +74,7 @@ public class X12EDIController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (X12ToFhirException e) {
             log.error("FHIR conversion failed. {}", e.getMessage(), e);
-            return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 }

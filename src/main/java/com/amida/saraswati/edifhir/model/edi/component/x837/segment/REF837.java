@@ -3,6 +3,7 @@ package com.amida.saraswati.edifhir.model.edi.component.x837.segment;
 import com.amida.saraswati.edifhir.model.edi.component.x12segment.REF;
 import com.imsweb.x12.Segment;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * The object represents a REF segment in X12-837.
@@ -30,5 +31,9 @@ public class REF837 extends REF implements HasX12ParserSegment {
     public String getClaimNumber() {
         return CLAIM_NO_IDENTIFIER.equals(getRef01()) ?
                 getRef02() : null;
+    }
+
+    public boolean isValid() {
+        return !StringUtils.isEmpty(getRef01());
     }
 }

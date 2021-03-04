@@ -1,8 +1,9 @@
 package com.amida.saraswati.edifhir.service.mapper;
 
-import com.amida.saraswati.edifhir.model.edi.component.x837.segment.CLM837;
-import com.amida.saraswati.edifhir.model.edi.component.x837.segment.REF837;
-import com.amida.saraswati.edifhir.model.edi.component.x837.segment.SV1837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.*;
+import com.amida.saraswati.edifhir.model.x12helper.ClaimReferences;
+import com.amida.saraswati.edifhir.model.x12helper.ClaimRelatedDates;
+import com.amida.saraswati.edifhir.util.X12ParserUtil;
 import com.amida.saraswati.edifhir.util.X12Util;
 import com.imsweb.x12.Loop;
 import com.imsweb.x12.Segment;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.Claim;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Reference;
 
 import java.util.Date;
 import java.util.List;
@@ -25,7 +27,6 @@ import java.util.stream.Collectors;
 public class ClaimMapper {
     private static final String LOOP_2400 = "2400";
 
-
     /**
      * Maps an X12 2300 loop to a FHIR Claim resource.
      *
@@ -37,21 +38,29 @@ public class ClaimMapper {
         Segment clm = loop2300.getSegment("CLM");
         CLM837 clm837 = new CLM837(clm);
         setClaim(claim, clm837);
-        Segment createDTP = loop2300.getSegment("DTP");
-        // TODO: many DTP, etc.
 
-        Segment ref = loop2300.getSegment("REF");
-        if (ref != null) {
-            REF837 ref837 = new REF837(ref);
-            String claimNumber = ref837.getClaimNumber();
-            if (claimNumber != null) {
-                setClaimId(claim, claimNumber);
-            }
+        List<DTP837> dtps = X12ParserUtil.getLoop2300Dtps(loop2300);
+        ClaimRelatedDates dates = X12Util.getClaimRelateddDates(dtps);
+        // TODO: populate claim dates.
+
+        List<PWK837> supplementalInfo = X12ParserUtil.getLoop2300Pwks(loop2300);
+        // TODO: map supplementalInfo
+
+        Segment amt = loop2300.getSegment("AMT");
+        if (amt != null) {
+            // TODO: figure out what to do with Patient Paid Amount. Fhir claim doesn't have it.
         }
-        // TODO: many REFs, etc
 
+        List<REF837> refs = X12ParserUtil.getLoop2300Refs(loop2300);
+        ClaimReferences references = new ClaimReferences();
+        refs.forEach(r -> X12Util.updateClaimReferences(references, r));
+        if (!StringUtils.isEmpty(references.getClaimNumber())) {
+            setClaimId(claim, references.getClaimNumber());
+        }
 
-        Segment hi = loop2300.getSegment("HI");
+        // TODO: many REFs, K3, NTE, CR1, CR2, CRCs
+
+        List<HI837> hi = X12ParserUtil.getLoop2300HIs(loop2300);
         // TODO: many HIs, and HCP
 
         Loop loop2310A = loop2300.getLoop("2310A");
@@ -60,6 +69,7 @@ public class ClaimMapper {
         Loop loop2310D = loop2300.getLoop("2310D");
         Loop loop2310E = loop2300.getLoop("2310E");
         Loop loop2310F = loop2300.getLoop("2310F");
+        // TODO: process 2300 sub loops.
 
         List<Loop> loop2400s = loop2300.getLoops().stream()
                 .filter(l -> LOOP_2400.equals(l.getId()))
@@ -108,6 +118,10 @@ public class ClaimMapper {
     private static void setClaim(Claim claim, CLM837 clm) {
         claim.setCreated(new Date());
         setClaimAmount(claim, clm.getClaimAmount());
+        claim.setId(clm.getSubmitterId());
+        Reference facility = X12Util.getReference(clm.getFacilityCode(), clm.getFacilityCodeQualifier());
+        claim.setFacility(facility);
+        // TODO: more fields mapping to do.
     }
 
     /**

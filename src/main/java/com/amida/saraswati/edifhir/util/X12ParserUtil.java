@@ -1,10 +1,15 @@
 package com.amida.saraswati.edifhir.util;
 
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.DTP837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.HI837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.PWK837;
+import com.amida.saraswati.edifhir.model.edi.component.x837.segment.REF837;
 import com.imsweb.x12.Loop;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Contains some utilities for processing x12-parser data.
@@ -65,5 +70,28 @@ public class X12ParserUtil {
             }
             logLoopTravise(l.getLoops(), indent + 2, showSegments);
         });
+    }
+
+    // Get X12Reader loop elements
+    ///////////////////////////////////////////////////////
+
+    public static List<DTP837> getLoop2300Dtps(Loop loop2300) {
+        return loop2300.getSegments().stream().filter(s -> s.getId().equals("DTP"))
+                .map(DTP837::new).collect(Collectors.toList());
+    }
+
+    public static List<PWK837> getLoop2300Pwks(Loop loop2300) {
+        return loop2300.getSegments().stream().filter(s -> s.getId().equals("PWK"))
+                .map(PWK837::new).collect(Collectors.toList());
+    }
+
+    public static List<REF837> getLoop2300Refs(Loop loop2300) {
+        return loop2300.getSegments().stream().filter(s -> s.getId().equals("REF"))
+                .map(REF837::new).collect(Collectors.toList());
+    }
+
+    public static List<HI837> getLoop2300HIs(Loop loop2300) {
+        return loop2300.getSegments().stream().filter(s -> s.getId().equals("HI"))
+                .map(HI837::new).collect(Collectors.toList());
     }
 }
