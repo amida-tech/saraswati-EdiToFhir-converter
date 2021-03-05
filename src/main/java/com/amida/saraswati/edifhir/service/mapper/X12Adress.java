@@ -8,6 +8,10 @@ public class X12Adress {
     static public Address toFhir(Loop loop) {
         Segment streetAddress = loop.getSegment("N3");
         Segment cityStateZip = loop.getSegment("N4");
+        return getAddress(streetAddress, cityStateZip);
+    }
+
+    public static Address getAddress(Segment streetAddress, Segment cityStateZip) {
         if (streetAddress == null && cityStateZip == null) {
             return null;
         }

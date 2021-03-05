@@ -13,6 +13,7 @@ public class X12BillingProvider {
         String entityType = name.getElement("NM1", "NM102");
         if (entityType.equals("1")) {
             Practitioner practitioner = new Practitioner();
+            practitioner.setId(loop2000A.getId());
             return practitioner;
         } else if (entityType.equals("2")) {
             Organization organization = new Organization();
@@ -55,6 +56,7 @@ public class X12BillingProvider {
             if (address != null) {
                 organization.setAddress(Arrays.asList(address));
             }
+            organization.setId(loop2000A.getId());
             return organization;
         }
         return null;

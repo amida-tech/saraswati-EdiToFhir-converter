@@ -8,28 +8,53 @@
 		<version>2.4.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>edi-fhir</groupId>
+	<groupId>edifhir</groupId>
 	<artifactId>converter</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>converter</name>
-	<description>Demo project for Spring Boot</description>
+	<description>EDI X12 to FHIR convertion</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>1.8</java.version>
 		<spring-cloud.version>2020.0.1</spring-cloud.version>
 		<testcontainers.version>1.15.1</testcontainers.version>
+		<springdoc.openapi.version>1.2.30</springdoc.openapi.version>
 	</properties>
 	<dependencies>
+		<!-- HAPI FHIR -->
 		<dependency>
     		<groupId>ca.uhn.hapi.fhir</groupId>
     		<artifactId>hapi-fhir-structures-r4</artifactId>
-    		<version>5.2.1</version>
+    		<version>5.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-base</artifactId>
+			<version>5.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>org.hl7.fhir.r4</artifactId>
+			<version>5.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>org.hl7.fhir.dstu3</artifactId>
+			<version>5.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-client</artifactId>
+			<version>5.3.0</version>
 		</dependency>
 
+		<!-- X12-parser -->
 		<dependency>
     		<groupId>com.imsweb</groupId>
     		<artifactId>x12-parser</artifactId>
     		<version>1.11</version>
 		</dependency>
+
+		<!-- Spring boot  -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -43,19 +68,9 @@
 			<artifactId>spring-cloud-stream-binder-kafka</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -70,11 +85,24 @@
 			<classifier>test-binder</classifier>
 			<type>test-jar</type>
 		</dependency>
+
+		<!-- kafka  -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>junit-jupiter</artifactId>
@@ -85,6 +113,7 @@
 			<artifactId>kafka</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -116,7 +145,7 @@
 			<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.0</version>
+					<version>3.8.0</version>
 					<configuration>
 						<source>1.8</source>
 						<target>1.8</target>
