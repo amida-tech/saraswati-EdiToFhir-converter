@@ -1,13 +1,16 @@
 package com.amida.saraswati.edifhir.controller;
 
 import com.amida.saraswati.edifhir.exception.InvalidDataException;
+import com.amida.saraswati.edifhir.exception.StreamException;
 import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir837;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
+import com.amida.saraswati.edifhir.service.stream.KafkaStreamService;
 import com.amida.saraswati.edifhir.util.X12ParserUtil;
 import com.imsweb.x12.reader.X12Reader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,8 +53,14 @@ public class X12EDIController {
         }
     }
 
+    @Value(value = "${kafka.publish.key}")
+    private String messageKey;
+
     @Autowired
     private X12ToFhirService service;
+
+    @Autowired
+    private KafkaStreamService streamService;
 
     @PostMapping("/x12loop")
     public ResponseEntity<String> getX12Loops(
@@ -107,6 +116,18 @@ public class X12EDIController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (X12ToFhirException e) {
             log.error("FHIR conversion failed. {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/poststream")
+    public ResponseEntity<String> postmessage(
+            @RequestBody String data, @RequestParam(name = "topic") String topic
+    ) {
+        try {
+            streamService.publishMessage(topic, messageKey, data);
+            return ResponseEntity.ok("message posted");
+        } catch (StreamException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
