@@ -4,6 +4,7 @@ import com.amida.saraswati.edifhir.exception.InvalidDataException;
 import com.amida.saraswati.edifhir.exception.StreamException;
 import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir837;
+import com.amida.saraswati.edifhir.model.streammessage.EdiFhirMessage;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
 import com.amida.saraswati.edifhir.service.stream.KafkaStreamService;
 import com.amida.saraswati.edifhir.util.X12ParserUtil;
@@ -132,6 +133,25 @@ public class X12EDIController {
         }
     }
 
+    @GetMapping("/getstreammessage")
+    public ResponseEntity<String> getMessage(
+            @RequestParam(name = "topic") String topic
+    ) {
+        try {
+            List<EdiFhirMessage> result = streamService.pollMessage(topic);
+            StringBuilder msg = new StringBuilder();
+            String headline = String.format("Total messages received from the topic, %s: %d\n",
+                    topic, result.size());
+            msg.append(headline);
+            result.forEach(r -> {
+                msg.append("\n").append("key : ").append(r.getKey()).append("\n");
+                msg.append(r.getValue()).append("\n");
+            });
+            return ResponseEntity.ok(msg.toString());
+        } catch (StreamException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
     @GetMapping("/healthy")
     public ResponseEntity<String> healthy() {
         String resp = "I'm good. I support the following endpoints." + "\n\n" +
