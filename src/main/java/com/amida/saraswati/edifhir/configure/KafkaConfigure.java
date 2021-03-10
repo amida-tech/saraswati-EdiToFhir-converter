@@ -39,7 +39,7 @@ public class KafkaConfigure {
     private String consumerGroupId;
 
     // SSL settings.
-    @Value(value = "$ssl.truststore.location}")
+    @Value(value = "${ssl.truststore.location}")
     private String truststoreLocation;
 
     @Value(value = "${ssl.truststore.password}")
@@ -54,7 +54,7 @@ public class KafkaConfigure {
     @Value(value = "${ssl.key.password}")
     private String keyPassword;
 
-    @Value(value = "${ssl.protocal")
+    @Value(value = "${ssl.protocol}")
     private String sslProtocol;
 
     @Bean
