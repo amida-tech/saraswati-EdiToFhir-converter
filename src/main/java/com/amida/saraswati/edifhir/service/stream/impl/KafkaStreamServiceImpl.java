@@ -15,6 +15,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -46,8 +47,11 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     @Autowired
     private KafkaConsumer<String, String> consumer;
 
+//    @Autowired
+//    private KafkaProducer<String, String> producer;
+
     @Autowired
-    private KafkaProducer<String, String> producer;
+    private KafkaTemplate<String, String> template;
 
     @Autowired
     private X12ToFhirService x12MapService;
@@ -100,7 +104,8 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
                 throws StreamException {
         try {
             ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, message);
-            producer.send(record);
+//            producer.send(record);
+            template.send(record).get(10, TimeUnit.SECONDS);
             log.info("post a message of {} bytes to topic: {} for key: {}",
                     message.length(), topic, key);
         } catch (Exception e) {
@@ -112,7 +117,6 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     @Override
     public List<EdiFhirMessage> pollMessage(String topic) throws StreamException {
         try {
-            //consumer.subscribe(Collections.singletonList(topic));
             ConsumerRecords<String, String> records = pollKafkaMessage(Collections.singletonList(topic));
             List<EdiFhirMessage> result = new ArrayList<>();
             records.forEach(r -> result.add(
@@ -123,5 +127,27 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
             log.error(errMsg, e);
             throw new StreamException(errMsg, e);
         }
+    }
+
+    @Override
+    public void processMessage(ConsumerRecord<String, String> record) {
+
+            log.info("Messge topic: {}, key: {} \n{}",
+                    record.topic(), record.key(), record.value());
+            if (inboundMessageKey.equals(record.key())) {
+                try {
+                    List<Fhir837> result = x12MapService.get837FhirBundles(record.value());
+                    result.forEach(r -> {
+                        try {
+                            publishMessage(publishTopic, publishMsgKey, r.toJson());
+                        } catch (StreamException e) {
+                            log.error("failed to post {}", r.toJson());
+                        }
+                    });
+                } catch (X12ToFhirException | InvalidDataException e) {
+                    log.error("x12 837 mapping error. {}", e.getMessage(), e);
+                }
+            }
+
     }
 }

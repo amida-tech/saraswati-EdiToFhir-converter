@@ -2,6 +2,7 @@ package com.amida.saraswati.edifhir.service.stream;
 
 import com.amida.saraswati.edifhir.exception.StreamException;
 import com.amida.saraswati.edifhir.model.streammessage.EdiFhirMessage;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.util.List;
 
@@ -12,4 +13,6 @@ public interface KafkaStreamService {
     void publishMessage(String topic, String key, String message) throws StreamException;
 
     List<EdiFhirMessage> pollMessage(String topic) throws StreamException;
+
+    void processMessage(ConsumerRecord<String, String> record);
 }
