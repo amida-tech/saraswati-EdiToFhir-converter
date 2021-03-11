@@ -54,6 +54,12 @@ public class X12EDIController {
         }
     }
 
+    @Value(value = "${kafka.consumer.topic}")
+    private String consumerTopic;
+
+    @Value(value = "${kafka.publish.topic}")
+    private String publishTopic;
+
     @Value(value = "${kafka.publish.key}")
     private String messageKey;
 
@@ -126,8 +132,12 @@ public class X12EDIController {
             @RequestBody String data, @RequestParam(name = "topic") String topic
     ) {
         try {
-            streamService.publishMessage(topic, messageKey, data);
-            return ResponseEntity.ok("message posted");
+            if (consumerTopic.equals(topic) || publishTopic.equals(topic)) {
+                streamService.publishMessage(topic, messageKey, data);
+                return ResponseEntity.ok("message posted");
+            } else {
+                return ResponseEntity.badRequest().body("Unsupported topic.");
+            }
         } catch (StreamException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
@@ -152,6 +162,7 @@ public class X12EDIController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
     @GetMapping("/healthy")
     public ResponseEntity<String> healthy() {
         String resp = "I'm good. I support the following endpoints." + "\n\n" +
@@ -164,6 +175,13 @@ public class X12EDIController {
                 "/edi/x12ToFhir: convert EDI 837 to a list of FHIR bundles\n" +
                 "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
                 "              body: 837 transaction text." +
+                "\n" +
+                "/edi/poststream: post an EDI 837 transaction to a kafka topic\n" +
+                "              parameter: topic, e.g., ?topic=Edi837." + "\n" +
+                "              body: 837 transaction text." +
+                "\n" +
+                "/edi/getstreammessage: get a list of messages in a kafka topic.\n" +
+                "              parameter: topic, e.g., ?topic=Edi837." +
                 "\n";
         return ResponseEntity.ok(resp);
     }

@@ -30,10 +30,4 @@ public class ConverterApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ConverterApplication.class, args);
 	}
-
-    @KafkaListener(id = "x12Listener", topics = "Edi837",
-		autoStartup = "${listen.auto.start:true}", concurrency = "${listen.concurrency:3}")
-	public void listen(ConsumerRecord<String, String> record) {
-		service.processMessage(record);
-	}
 }

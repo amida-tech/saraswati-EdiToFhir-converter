@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * It represents a FHIR message from Kafka stream.
+ * It represents a text message from Kafka stream.
  *
  * @author warren lin
  */
