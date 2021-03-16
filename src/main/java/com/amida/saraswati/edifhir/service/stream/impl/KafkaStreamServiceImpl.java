@@ -86,6 +86,7 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
             List<EdiFhirMessage> result = new ArrayList<>();
             records.forEach(r -> result.add(
                     new EdiFhirMessage(topic, Optional.ofNullable(r.key()).orElse(""), r.value())));
+            log.info("{} messags pulled from {}", result.size(), topic);
             return result;
         } catch (StreamException e) {
             String errMsg = String.format("Failed to poll Kafka message for topic, %s.", topic);
@@ -121,4 +122,6 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
         log.info("Receive message from Edi837, key={}", record.key());
         processMessage(record);
     }
+
+
 }

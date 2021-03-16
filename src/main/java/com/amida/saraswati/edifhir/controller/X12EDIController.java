@@ -5,9 +5,11 @@ import com.amida.saraswati.edifhir.exception.StreamException;
 import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir837;
 import com.amida.saraswati.edifhir.model.streammessage.EdiFhirMessage;
+import com.amida.saraswati.edifhir.model.x12passer.X12LoopInfo;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
 import com.amida.saraswati.edifhir.service.stream.KafkaStreamService;
 import com.amida.saraswati.edifhir.util.X12ParserUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imsweb.x12.reader.X12Reader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +75,7 @@ public class X12EDIController {
     public ResponseEntity<String> getX12Loops(
             @RequestBody String x12Data,
             @RequestParam(required = false, name = "showSegment") boolean showSegment,
+            @RequestParam(required = false, name = "showFhirMappingInfo") boolean showFhirMappingInfo,
             @RequestParam(required = false, name = "x12DataType") String x12DataType)
     {
         X12Reader.FileType x12ReadFileType = getX12ReaderFileType(x12DataType);
@@ -87,8 +90,17 @@ public class X12EDIController {
             if (!reader.getFatalErrors().isEmpty()) {
                 return ResponseEntity.badRequest().body(reader.getFatalErrors().get(0));
             }
-            String result = X12ParserUtil.loopTravise(reader.getLoops(), 1,
-                    Optional.of(showSegment).orElse(false));
+            String result;
+            if (showFhirMappingInfo) {
+                x12DataType = x12DataType == null ? "837" : x12DataType;
+                List<X12LoopInfo> info =
+                        X12ParserUtil.loopTraviseWithInfo(reader.getLoops(), X12DATA_TYPE.getType(x12DataType));
+                ObjectMapper mapper = new ObjectMapper();
+                result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);
+            } else {
+                result = X12ParserUtil.loopTravise(reader.getLoops(), 1,
+                        Optional.of(showSegment).orElse(false));
+            }
             return ResponseEntity.ok(result);
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Unsupported EDI X12-837 data.");
@@ -131,6 +143,7 @@ public class X12EDIController {
     public ResponseEntity<String> postmessage(
             @RequestBody String data, @RequestParam(name = "topic") String topic
     ) {
+        log.info("postmessage to {}", Optional.ofNullable(topic).orElse("Not Provided!"));
         try {
             if (consumerTopic.equals(topic) || publishTopic.equals(topic)) {
                 streamService.publishMessage(topic, messageKey, data);
@@ -147,6 +160,7 @@ public class X12EDIController {
     public ResponseEntity<String> getMessage(
             @RequestParam(name = "topic") String topic
     ) {
+        log.info("getstreammessage from {}", Optional.ofNullable(topic).orElse("Not Provided!"));
         try {
             List<EdiFhirMessage> result = streamService.pollMessage(topic);
             StringBuilder msg = new StringBuilder();
