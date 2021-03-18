@@ -23,15 +23,17 @@ public interface KafkaStreamService {
      * the Kafka stream service in this application.
      *
      * @param topic stream topic.
+     * @param isCommitting indicates whether to commit after polling the message.
      * @return a list of {@link EdiFhirMessage}.
      * @throws StreamException error occurs.
      */
-    List<EdiFhirMessage> pollMessage(String topic) throws StreamException;
+    List<EdiFhirMessage> pollMessage(String topic, boolean isCommitting) throws StreamException;
 
     /**
      * Processes a Kafka message.
      *
      * @param record A Kafka message record.
+     * @return a message about the processing.
      */
-    void processMessage(ConsumerRecord<String, String> record);
+    String processMessage(ConsumerRecord<String, String> record);
 }

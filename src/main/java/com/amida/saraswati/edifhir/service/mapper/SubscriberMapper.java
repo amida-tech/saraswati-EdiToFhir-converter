@@ -25,6 +25,7 @@ public class SubscriberMapper {
 
     private static final String CLAIM_FILING_TYPE_URL = "x12-837/claimfilingtype";
     private static final String SUBSCRIBER_RELATION_URL = "x12-837/subscriberrelation";
+    private static final String INSURANCE_PLAN_URL = "x12-837/insurancepolicy";
 
     public static Patient mapSubscriber(Loop loop2000B) {
         Patient subscriber = getSubscriberInfo(loop2000B);
@@ -64,6 +65,7 @@ public class SubscriberMapper {
         SBR837 sbr837 = new SBR837(sbr);
         Extension ext = subscriber.addExtension();
         ext.setId("Insurance Policy");
+        ext.setUrl(INSURANCE_PLAN_URL);  // TODO: Fhir InsurancePlan resource ID?
         CodeType insPolicyInfo = new CodeType(sbr837.getPlanName());
         ext.setValue(insPolicyInfo);
         ext = subscriber.addExtension();

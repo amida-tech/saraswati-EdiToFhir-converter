@@ -14,7 +14,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class KafkaStreamServiceImpl implements KafkaStreamService {
 
     private static final int TIME_OUT = 1000;
+    private static final String UNSUPPORTED_MESSAGE = "The message is not supported.";
 
     @Value(value = "${kafka.consumer.messagekey}")
     private String inboundMessageKey;
@@ -54,11 +54,17 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     @Autowired
     private X12ToFhirService x12MapService;
 
-    private synchronized ConsumerRecords<String, String> pollKafkaMessage(List<String> topics)
-            throws StreamException {
+    private synchronized ConsumerRecords<String, String> pollKafkaMessage(
+            List<String> topics, boolean isCommitting) throws StreamException {
         try {
+            log.info("pollKafkaMessage from topics: {}", topics.toString());
             consumer.subscribe(topics);
-            return consumer.poll(Duration.ofMillis(TIME_OUT));
+            ConsumerRecords<String, String> result = consumer.poll(Duration.ofMillis(TIME_OUT));
+            if (isCommitting) {
+                consumer.commitSync();
+            }
+            consumer.unsubscribe();  // TODO: put it in final?
+            return result;
         } catch (Exception e) {
             throw new StreamException("Failed polling Kafka message for topics: {}" +
                     String.join(",", topics), e);
@@ -80,9 +86,10 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     }
 
     @Override
-    public List<EdiFhirMessage> pollMessage(String topic) throws StreamException {
+    public List<EdiFhirMessage> pollMessage(String topic, boolean isCommitting) throws StreamException {
         try {
-            ConsumerRecords<String, String> records = pollKafkaMessage(Collections.singletonList(topic));
+            ConsumerRecords<String, String> records =
+                    pollKafkaMessage(Collections.singletonList(topic), isCommitting);
             List<EdiFhirMessage> result = new ArrayList<>();
             records.forEach(r -> result.add(
                     new EdiFhirMessage(topic, Optional.ofNullable(r.key()).orElse(""), r.value())));
@@ -96,31 +103,33 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     }
 
     @Override
-    public void processMessage(ConsumerRecord<String, String> record) {
-
+    public String processMessage(ConsumerRecord<String, String> record) {
             log.info("Messge topic: {}, key: {} \n{}",
                     record.topic(), record.key(), record.value());
             if (inboundMessageKey.equals(record.key())) {
                 try {
                     List<Fhir837> result = x12MapService.get837FhirBundles(record.value());
-                    result.forEach(r -> {
+                    log.info("Convert the 837 message to {} Fhir bundles.", result.size());
+                    Integer cnt = result.stream().map(r -> {
                         try {
                             publishMessage(publishTopic, publishMsgKey, r.toJson());
+                            return 1;
                         } catch (StreamException e) {
                             log.error("failed to post {}", r.toJson());
+                            return 0;
                         }
-                    });
+                    }).mapToInt(Integer::intValue).sum();
+                    String returnMsg = String.format("Published %d Fhir bundles to %s", cnt, publishMsgKey);
+                    log.info(returnMsg);
+                    return returnMsg;
                 } catch (X12ToFhirException | InvalidDataException e) {
-                    log.error("x12 837 mapping error. {}", e.getMessage(), e);
+                    String errMsg = String.format("x12 837 mapping error. %s", e.getMessage());
+                    log.error(errMsg, e);
+                    return errMsg;
                 }
+            } else {
+                return UNSUPPORTED_MESSAGE;
             }
-    }
-
-    @KafkaListener(id = "x12Listener", topics = "Edi837",
-            autoStartup = "true", concurrency = "3")
-    public void listen(ConsumerRecord<String, String> record) {
-        log.info("Receive message from Edi837, key={}", record.key());
-        processMessage(record);
     }
 
 

@@ -53,15 +53,9 @@ public class KafkaConfigure {
 
     @Bean
     public KafkaConsumer<String, String> consumer() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddressConsumer);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        if (useSsl) {
-            setSSL(props);
-        }
-        log.info("kafka setup: {}", props.toString());
+        Map<String, Object> props = consumerConfigs();
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        log.info("kafka consumer setup: {}", props.toString());
         return new KafkaConsumer<>(props);
     }
 
@@ -84,6 +78,7 @@ public class KafkaConfigure {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         if (useSsl) {
+            log.info("Configure Kafka producer for SSL connection.");
             setSSL(props);
         }
         return props;
@@ -102,7 +97,7 @@ public class KafkaConfigure {
         ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.setConcurrency(3);
+        factory.setConcurrency(2);
         factory.getContainerProperties().setPollTimeout(TIME_OUT);
         return factory;
     }
@@ -117,7 +112,9 @@ public class KafkaConfigure {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
         if (useSsl) {
+            log.info("kafka consumer setup for Kafka listener: {}", props.toString());
             setSSL(props);
         }
         return props;

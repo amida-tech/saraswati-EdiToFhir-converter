@@ -10,12 +10,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.KafkaListener;
 
 import java.util.Arrays;
 
 @SpringBootApplication
 @Slf4j
+@EnableKafka
 public class ConverterApplication {
 
 	@Value(value = "${FEATURE_KAFKA}")
@@ -30,4 +32,13 @@ public class ConverterApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ConverterApplication.class, args);
 	}
+
+	@KafkaListener(id = "x12Listener", topics = "#{'${kafka.consumer.topic}'}",
+			autoStartup = "true", concurrency = "2")
+	public void listen(ConsumerRecord<String, String> record) {
+		log.info("Receive message from {}, key={}", subscribeTopic, record.key());
+		service.processMessage(record);
+		log.info("message from {} processed.", subscribeTopic);
+	}
+
 }

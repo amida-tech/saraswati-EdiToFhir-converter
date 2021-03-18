@@ -158,11 +158,12 @@ public class X12EDIController {
 
     @GetMapping("/getstreammessage")
     public ResponseEntity<String> getMessage(
-            @RequestParam(name = "topic") String topic
+            @RequestParam(name = "topic") String topic,
+            @RequestParam(required = false, name = "isCommitting") boolean isCommitting
     ) {
         log.info("getstreammessage from {}", Optional.ofNullable(topic).orElse("Not Provided!"));
         try {
-            List<EdiFhirMessage> result = streamService.pollMessage(topic);
+            List<EdiFhirMessage> result = streamService.pollMessage(topic, isCommitting);
             StringBuilder msg = new StringBuilder();
             String headline = String.format("Total messages received from the topic, %s: %d\n",
                     topic, result.size());
