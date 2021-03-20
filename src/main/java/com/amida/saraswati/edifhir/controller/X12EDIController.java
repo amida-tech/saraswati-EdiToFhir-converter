@@ -3,8 +3,10 @@ package com.amida.saraswati.edifhir.controller;
 import com.amida.saraswati.edifhir.exception.InvalidDataException;
 import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir837;
+import com.amida.saraswati.edifhir.model.x12passer.X12LoopInfo;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
 import com.amida.saraswati.edifhir.util.X12ParserUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imsweb.x12.reader.X12Reader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,7 @@ public class X12EDIController {
         EDI837("837"), EDI834("834"), EDI835("835"), UNKNOWN("");
 
         private final String name;
+
         X12DATA_TYPE(String name) {
             this.name = name;
         }
@@ -57,8 +60,8 @@ public class X12EDIController {
     public ResponseEntity<String> getX12Loops(
             @RequestBody String x12Data,
             @RequestParam(required = false, name = "showSegment") boolean showSegment,
-            @RequestParam(required = false, name = "x12DataType") String x12DataType)
-    {
+            @RequestParam(required = false, name = "showFhirMappingInfo") boolean showFhirMappingInfo,
+            @RequestParam(required = false, name = "x12DataType") String x12DataType) {
         X12Reader.FileType x12ReadFileType = getX12ReaderFileType(x12DataType);
         if (x12ReadFileType == null) {
             return ResponseEntity.badRequest().body("Not supported x12 data type.");
@@ -71,8 +74,17 @@ public class X12EDIController {
             if (!reader.getFatalErrors().isEmpty()) {
                 return ResponseEntity.badRequest().body(reader.getFatalErrors().get(0));
             }
-            String result = X12ParserUtil.loopTravise(reader.getLoops(), 1,
-                    Optional.of(showSegment).orElse(false));
+            String result;
+            if (showFhirMappingInfo) {
+                x12DataType = x12DataType == null ? "837" : x12DataType;
+                List<X12LoopInfo> info =
+                        X12ParserUtil.loopTraviseWithInfo(reader.getLoops(), X12DATA_TYPE.getType(x12DataType));
+                ObjectMapper mapper = new ObjectMapper();
+                result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);
+            } else {
+                result = X12ParserUtil.loopTravise(reader.getLoops(), 1,
+                        Optional.of(showSegment).orElse(false));
+            }
             return ResponseEntity.ok(result);
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Unsupported EDI X12-837 data.");
@@ -111,19 +123,25 @@ public class X12EDIController {
         }
     }
 
-    @GetMapping("/healthy")
+    @GetMapping("/info")
     public ResponseEntity<String> healthy() {
-        String resp = "I'm good. I support the following endpoints." + "\n\n" +
+        String resp =
                 "endpoints: \n" +
-                "/edi/x12loop: list EDI data loop structure. " + "\n" +
-                "              parameter: showSegment = true/false, It is optional, default to false." + "\n" +
-                "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
-                "              body: 837 transaction text." +
-                "\n" +
-                "/edi/x12ToFhir: convert EDI 837 to a list of FHIR bundles\n" +
-                "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
-                "              body: 837 transaction text." +
-                "\n";
+                        "/edi/x12loop: list EDI data loop structure. " + "\n" +
+                        "              parameter: showSegment = true/false, It is optional, default to false." + "\n" +
+                        "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
+                        "              body: 837 transaction text." +
+                        "\n" +
+                        "/edi/x12ToFhir: convert EDI 837 to a list of FHIR bundles\n" +
+                        "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
+                        "              body: 837 transaction text." +
+                        "\n" +
+                        "/edi/poststream: post an EDI 837 transaction to a kafka topic\n" +
+                        "              parameter: topic, e.g., ?topic=Edi837." + "\n" +
+                        "              body: 837 transaction text." +
+                        "\n" +
+                        "/edi/getstreammessage: get a list of recent messages in a kafka outbound (Fhir837) stream.\n" +
+                        "\n";
         return ResponseEntity.ok(resp);
     }
 

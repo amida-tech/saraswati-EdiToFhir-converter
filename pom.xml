@@ -18,6 +18,7 @@
 		<spring-cloud.version>2020.0.1</spring-cloud.version>
 		<testcontainers.version>1.15.1</testcontainers.version>
 		<springdoc.openapi.version>1.2.30</springdoc.openapi.version>
+		<spring.cloud.stream.binding.version>3.1.1</spring.cloud.stream.binding.version>
 	</properties>
 	<dependencies>
 		<!-- HAPI FHIR -->
@@ -90,11 +91,29 @@
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
+			<version>2.6.6</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka-test</artifactId>
+			<version>2.6.6</version>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream</artifactId>
+			<version>${spring.cloud.stream.binding.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream-binder-kafka</artifactId>
+			<version>${spring.cloud.stream.binding.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream-binder-kafka-streams</artifactId>
+			<version>${spring.cloud.stream.binding.version}</version>
 		</dependency>
 
 		<dependency>

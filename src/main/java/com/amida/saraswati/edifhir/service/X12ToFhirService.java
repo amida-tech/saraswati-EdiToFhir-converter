@@ -49,11 +49,20 @@ public interface X12ToFhirService {
     /**
      * Converts the given X12Reader to a Set of Fhir837.
      *
-     * @param x12Reader A X12Reader containing a x12-837 .
+     * @param x12Reader A X12Reader containing an x12-837 transaction.
      * @return a set of Fhir837
      * @throws X12ToFhirException error occurs.
      * @throws InvalidDataException x12 transaction data in X12Reader is invalid.
      */
     List<Fhir837> get837FhirBundles(X12Reader x12Reader) throws X12ToFhirException, InvalidDataException;
 
+    /**
+     * Converts the given string to a Set of Fhir837.
+     *
+     * @param x837 A text of an x12-837.
+     * @return a set of Fhir837
+     * @throws X12ToFhirException error occurs.
+     * @throws InvalidDataException x12 transaction data in X12Reader is invalid.
+     */
+    List<Fhir837> get837FhirBundles(String x837) throws X12ToFhirException, InvalidDataException;
 }

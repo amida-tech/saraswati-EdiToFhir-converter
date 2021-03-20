@@ -15,7 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * It contains a set of utility methods used for processing x12 data.
+ * It contains a set of utility methods used for processing x12 data, map
+ * an X12 data segemnt to a FHIR component.
  *
  * @author Warren Lin
  */
@@ -24,10 +25,10 @@ public class X12Util {
     private static final String DEFAULT_CURRENCY = "USD";
 
     /**
-     * Maps an amount to a FHIR Money object. The currency is default to US$.
+     * Maps an amount to a FHIR {@link Money}. The currency is default to US$.
      *
      * @param amt a string for an amount of money.
-     * @return a Money object.
+     * @return a FHIR {@link Money} object.
      * @throws NumberFormatException the given amount string is invalid.
      */
     public static Money getMoneyObject(String amt) throws NumberFormatException {
@@ -64,12 +65,24 @@ public class X12Util {
         return humanName;
     }
 
+    /**
+     * Gets a {@link HumanName} from an X12 PER segment.
+     *
+     * @param per an X12 837 PER segment.
+     * @return a {@link HumanName} object.
+     */
     public static HumanName getHumanName(PER837 per) {
         HumanName humanName = new HumanName();
         humanName.setText(per.getName()).setId(per.getPer01());
         return humanName;
     }
 
+    /**
+     * Gets a list of {@link ContactPoint} from the given X12 PER segment.
+     *
+     * @param per837 an X12 PER segment for 837.
+     * @return a list of {@link ContactPoint}
+     */
     public static List<ContactPoint> getContactNumbers(PER837 per837) {
         List<ContactPoint> contacts = new ArrayList<>();
         String contactNumber = per837.getContactNumber1();
@@ -94,7 +107,8 @@ public class X12Util {
     }
 
     /**
-     * Maps a gender code (M, F, other) used in X12 to a FHIR AdministrativeGender.
+     * Maps a gender code (M, F, other) used in X12 to a FHIR AdministrativeGender
+     * in {@link Enumerations}.
      *
      * @param code gender code used in X12.
      * @return AdministrativeGender.
@@ -111,7 +125,7 @@ public class X12Util {
     }
 
     /**
-     * Gets a FHIR CodeableConcept.
+     * Gets a FHIR {@link CodeableConcept}.
      *
      * @param code code used for ID.
      * @param value value string used for text.
@@ -123,6 +137,13 @@ public class X12Util {
         return concept;
     }
 
+    /**
+     * Gets a FHIR {@link Reference} object.
+     *
+     * @param id reference ID.
+     * @param type reference type.
+     * @return a {@link Reference} object.
+     */
     public static Reference getReference(String id, String type) {
         Reference ref = new Reference();
         ref.setId(id);
@@ -131,6 +152,12 @@ public class X12Util {
         return ref;
     }
 
+    /**
+     * Gets a patient {@link Reference}.
+     *
+     * @param id reference id.
+     * @return a {@link Reference} object.
+     */
     public static Reference getPatientReference(String id) {
         String type = "Patient";
         return getReference(id, type);
@@ -151,6 +178,12 @@ public class X12Util {
         return dates;
     }
 
+    /**
+     * Updates a FHIR {@link ClaimRelatedDates} object with the given X12 837 DTP segment.
+     *
+     * @param dates the ClaimRelatedDates object to be updated.
+     * @param dtp an X12 837 DTP segment.
+     */
     private static void updateClaimRelatedDates(ClaimRelatedDates dates, DTP837 dtp) {
         if (dtp.hasValidCode()) {
             switch (dtp.getDateTimeQualifier()) {
@@ -210,6 +243,12 @@ public class X12Util {
         }
     }
 
+    /**
+     * Updates a FHIR {@link ClaimReferences} object with the given X12 837 REF segment.
+     *
+     * @param references the {@link ClaimReferences} to be updated.
+     * @param ref an X12 837 REF segment.
+     */
     public static void updateClaimReferences(ClaimReferences references, REF837 ref) {
         if (ref.isValid()) {
             switch (ref.getQualifier()) {

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  labels:
+    app: saraswati-editofhir-converter
+  name: saraswati-editofhir-converter-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: saraswati-editofhir-converter
+  template:
+    metadata:
+      labels:
+        app: saraswati-editofhir-converter
+    spec:
+      containers:
+      - env:
+        - name: SPRING_KAFKA_BOOTSTRAPSERVERS
+          value: b-1.saraswatikafkacluster.12345.c9.kafka.us-east-1.amazonaws.com:9094,b-2.saraswatikafkacluster.12345.c9.kafka.us-east-1.amazonaws.com:9094
+        image: amidatech/saraswati-editofhir-converter
+        imagePullPolicy: Always
+        name: saraswati-editofhir-converter
+        ports:
+        - containerPort: 8080
+        # volumeMounts:
+        # - mountPath: /tmp/kafka.client.truststore.jks
+        #   name: kafka-client-truststore
+        #   subPath: kafka.client.truststore.jks
+      imagePullSecrets:
+      - name: regcred
+      restartPolicy: Always
+      # volumes:
+      # - configMap:
+      #     items:
+      #     - key: kafka.client.truststore.jks
+      #       path: kafka.client.truststore.jks
+      #     name: kafka-client-truststore
+      #   name: kafka-client-truststore
