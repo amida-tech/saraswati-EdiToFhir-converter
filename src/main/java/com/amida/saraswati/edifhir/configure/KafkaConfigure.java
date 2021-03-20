@@ -3,12 +3,12 @@ package com.amida.saraswati.edifhir.configure;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -21,10 +21,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Configures Kafka clients.
+ * Configures Kafka stream.
  *
  * @author Warren Lin
  */
+@ConditionalOnProperty(name = "FEATURE_KAFKA", havingValue = "true")
 @Configuration
 @EnableKafka
 @Slf4j
@@ -50,14 +51,6 @@ public class KafkaConfigure {
 
     @Value(value = "${ssl.protocol}")
     private String sslProtocol;
-
-    @Bean
-    public KafkaConsumer<String, String> consumer() {
-        Map<String, Object> props = consumerConfigs();
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        log.info("kafka consumer setup: {}", props.toString());
-        return new KafkaConsumer<>(props);
-    }
 
     private void setSSL(Map<String, Object> props) {
         props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");

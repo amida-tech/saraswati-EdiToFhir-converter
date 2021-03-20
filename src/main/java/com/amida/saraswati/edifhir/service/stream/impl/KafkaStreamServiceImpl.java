@@ -7,21 +7,17 @@ import com.amida.saraswati.edifhir.model.fhir.Fhir837;
 import com.amida.saraswati.edifhir.model.streammessage.EdiFhirMessage;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
 import com.amida.saraswati.edifhir.service.stream.KafkaStreamService;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,8 +29,15 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class KafkaStreamServiceImpl implements KafkaStreamService {
 
-    private static final int TIME_OUT = 1000;
+    @Data
+    @AllArgsConstructor
+    private static class FhirMessage {
+        private Date timestamp;
+        private ConsumerRecord<String, String> message;
+    }
+
     private static final String UNSUPPORTED_MESSAGE = "The message is not supported.";
+    private static final int FHIR_MESSAGE_LIMIT = 5;
 
     @Value(value = "${kafka.consumer.messagekey}")
     private String inboundMessageKey;
@@ -46,30 +49,13 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     private String publishTopic;
 
     @Autowired
-    private KafkaConsumer<String, String> consumer;
-
-    @Autowired
     private KafkaTemplate<String, String> template;
 
     @Autowired
     private X12ToFhirService x12MapService;
 
-    private synchronized ConsumerRecords<String, String> pollKafkaMessage(
-            List<String> topics, boolean isCommitting) throws StreamException {
-        try {
-            log.info("pollKafkaMessage from topics: {}", topics.toString());
-            consumer.subscribe(topics);
-            ConsumerRecords<String, String> result = consumer.poll(Duration.ofMillis(TIME_OUT));
-            if (isCommitting) {
-                consumer.commitSync();
-            }
-            consumer.unsubscribe();  // TODO: put it in final?
-            return result;
-        } catch (Exception e) {
-            throw new StreamException("Failed polling Kafka message for topics: {}" +
-                    String.join(",", topics), e);
-        }
-    }
+    private final Queue<FhirMessage> fhirMessageQueue = new LinkedList<>();
+    private int fhirMessageCount = 0;
 
     @Override
     public void publishMessage(String topic, String key, String message)
@@ -86,24 +72,16 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
     }
 
     @Override
-    public List<EdiFhirMessage> pollMessage(String topic, boolean isCommitting) throws StreamException {
-        try {
-            ConsumerRecords<String, String> records =
-                    pollKafkaMessage(Collections.singletonList(topic), isCommitting);
+    public List<EdiFhirMessage> pollMessage() {
             List<EdiFhirMessage> result = new ArrayList<>();
-            records.forEach(r -> result.add(
-                    new EdiFhirMessage(topic, Optional.ofNullable(r.key()).orElse(""), r.value())));
-            log.info("{} messags pulled from {}", result.size(), topic);
+            fhirMessageQueue.forEach(r -> result.add(
+                    new EdiFhirMessage(r.getTimestamp(), r.getMessage().topic(),
+                            r.getMessage().key(), r.getMessage().value())));
             return result;
-        } catch (StreamException e) {
-            String errMsg = String.format("Failed to poll Kafka message for topic, %s.", topic);
-            log.error(errMsg, e);
-            throw new StreamException(errMsg, e);
-        }
     }
 
     @Override
-    public String processMessage(ConsumerRecord<String, String> record) {
+    public void process837Message(ConsumerRecord<String, String> record) {
             log.info("Messge topic: {}, key: {} \n{}",
                     record.topic(), record.key(), record.value());
             if (inboundMessageKey.equals(record.key())) {
@@ -119,17 +97,45 @@ public class KafkaStreamServiceImpl implements KafkaStreamService {
                             return 0;
                         }
                     }).mapToInt(Integer::intValue).sum();
-                    String returnMsg = String.format("Published %d Fhir bundles to %s", cnt, publishMsgKey);
+                    String returnMsg = String.format("Published %d Fhir bundles to %s with key %s",
+                            cnt, publishTopic, publishMsgKey);
                     log.info(returnMsg);
-                    return returnMsg;
                 } catch (X12ToFhirException | InvalidDataException e) {
                     String errMsg = String.format("x12 837 mapping error. %s", e.getMessage());
                     log.error(errMsg, e);
-                    return errMsg;
                 }
             } else {
-                return UNSUPPORTED_MESSAGE;
+                log.info("{} key: {}, topic: {}", UNSUPPORTED_MESSAGE,
+                        record.key(), record.topic());
             }
+    }
+
+    @Override
+    public void process835Message(ConsumerRecord<String, String> record) {
+        // TODO: to be implemented
+    }
+
+    @Override
+    public void process834Message(ConsumerRecord<String, String> record) {
+        // TODO: to be implemented.
+    }
+
+    @Override
+    public synchronized void countFhirMessage(ConsumerRecord<String, String> record) {
+        if (fhirMessageQueue.size() == FHIR_MESSAGE_LIMIT) {
+            fhirMessageQueue.remove();
+        }
+        boolean success = fhirMessageQueue.offer(
+                new FhirMessage(new Date(), record));
+        if (success) {
+            log.info("A {} message from {} topic has been pushed. message queue size: {}.",
+                    record.topic(), record.key(), fhirMessageQueue.size());
+            fhirMessageCount++;
+            log.info("Total message count: {}", fhirMessageCount);
+        } else {
+            log.info("Push {} message from {} topic failed. message queue size: {}.",
+                    record.topic(), record.key(), fhirMessageQueue.size());
+        }
     }
 
 

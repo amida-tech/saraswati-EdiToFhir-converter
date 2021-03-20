@@ -1,19 +1,15 @@
 package com.amida.saraswati.edifhir.controller;
 
 import com.amida.saraswati.edifhir.exception.InvalidDataException;
-import com.amida.saraswati.edifhir.exception.StreamException;
 import com.amida.saraswati.edifhir.exception.X12ToFhirException;
 import com.amida.saraswati.edifhir.model.fhir.Fhir837;
-import com.amida.saraswati.edifhir.model.streammessage.EdiFhirMessage;
 import com.amida.saraswati.edifhir.model.x12passer.X12LoopInfo;
 import com.amida.saraswati.edifhir.service.X12ToFhirService;
-import com.amida.saraswati.edifhir.service.stream.KafkaStreamService;
 import com.amida.saraswati.edifhir.util.X12ParserUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imsweb.x12.reader.X12Reader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +37,7 @@ public class X12EDIController {
         EDI837("837"), EDI834("834"), EDI835("835"), UNKNOWN("");
 
         private final String name;
+
         X12DATA_TYPE(String name) {
             this.name = name;
         }
@@ -56,28 +53,15 @@ public class X12EDIController {
         }
     }
 
-    @Value(value = "${kafka.consumer.topic}")
-    private String consumerTopic;
-
-    @Value(value = "${kafka.publish.topic}")
-    private String publishTopic;
-
-    @Value(value = "${kafka.publish.key}")
-    private String messageKey;
-
     @Autowired
     private X12ToFhirService service;
-
-    @Autowired
-    private KafkaStreamService streamService;
 
     @PostMapping("/x12loop")
     public ResponseEntity<String> getX12Loops(
             @RequestBody String x12Data,
             @RequestParam(required = false, name = "showSegment") boolean showSegment,
             @RequestParam(required = false, name = "showFhirMappingInfo") boolean showFhirMappingInfo,
-            @RequestParam(required = false, name = "x12DataType") String x12DataType)
-    {
+            @RequestParam(required = false, name = "x12DataType") String x12DataType) {
         X12Reader.FileType x12ReadFileType = getX12ReaderFileType(x12DataType);
         if (x12ReadFileType == null) {
             return ResponseEntity.badRequest().body("Not supported x12 data type.");
@@ -139,65 +123,25 @@ public class X12EDIController {
         }
     }
 
-    @PostMapping("/poststream")
-    public ResponseEntity<String> postmessage(
-            @RequestBody String data, @RequestParam(name = "topic") String topic
-    ) {
-        log.info("postmessage to {}", Optional.ofNullable(topic).orElse("Not Provided!"));
-        try {
-            if (consumerTopic.equals(topic) || publishTopic.equals(topic)) {
-                streamService.publishMessage(topic, messageKey, data);
-                return ResponseEntity.ok("message posted");
-            } else {
-                return ResponseEntity.badRequest().body("Unsupported topic.");
-            }
-        } catch (StreamException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @GetMapping("/getstreammessage")
-    public ResponseEntity<String> getMessage(
-            @RequestParam(name = "topic") String topic,
-            @RequestParam(required = false, name = "isCommitting") boolean isCommitting
-    ) {
-        log.info("getstreammessage from {}", Optional.ofNullable(topic).orElse("Not Provided!"));
-        try {
-            List<EdiFhirMessage> result = streamService.pollMessage(topic, isCommitting);
-            StringBuilder msg = new StringBuilder();
-            String headline = String.format("Total messages received from the topic, %s: %d\n",
-                    topic, result.size());
-            msg.append(headline);
-            result.forEach(r -> {
-                msg.append("\n").append("key : ").append(r.getKey()).append("\n");
-                msg.append(r.getValue()).append("\n");
-            });
-            return ResponseEntity.ok(msg.toString());
-        } catch (StreamException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @GetMapping("/healthy")
+    @GetMapping("/info")
     public ResponseEntity<String> healthy() {
-        String resp = "I'm good. I support the following endpoints." + "\n\n" +
+        String resp =
                 "endpoints: \n" +
-                "/edi/x12loop: list EDI data loop structure. " + "\n" +
-                "              parameter: showSegment = true/false, It is optional, default to false." + "\n" +
-                "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
-                "              body: 837 transaction text." +
-                "\n" +
-                "/edi/x12ToFhir: convert EDI 837 to a list of FHIR bundles\n" +
-                "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
-                "              body: 837 transaction text." +
-                "\n" +
-                "/edi/poststream: post an EDI 837 transaction to a kafka topic\n" +
-                "              parameter: topic, e.g., ?topic=Edi837." + "\n" +
-                "              body: 837 transaction text." +
-                "\n" +
-                "/edi/getstreammessage: get a list of messages in a kafka topic.\n" +
-                "              parameter: topic, e.g., ?topic=Edi837." +
-                "\n";
+                        "/edi/x12loop: list EDI data loop structure. " + "\n" +
+                        "              parameter: showSegment = true/false, It is optional, default to false." + "\n" +
+                        "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
+                        "              body: 837 transaction text." +
+                        "\n" +
+                        "/edi/x12ToFhir: convert EDI 837 to a list of FHIR bundles\n" +
+                        "              parameter: x12DataType = 837. It is optional, default to 837." + "\n" +
+                        "              body: 837 transaction text." +
+                        "\n" +
+                        "/edi/poststream: post an EDI 837 transaction to a kafka topic\n" +
+                        "              parameter: topic, e.g., ?topic=Edi837." + "\n" +
+                        "              body: 837 transaction text." +
+                        "\n" +
+                        "/edi/getstreammessage: get a list of recent messages in a kafka outbound (Fhir837) stream.\n" +
+                        "\n";
         return ResponseEntity.ok(resp);
     }
 

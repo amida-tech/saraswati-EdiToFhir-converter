@@ -19,21 +19,38 @@ public interface KafkaStreamService {
     void publishMessage(String topic, String key, String message) throws StreamException;
 
     /**
-     * Poll messages from a topic in Kafa stream. It is intended to be used for test/verify
-     * the Kafka stream service in this application.
+     * Checks the FHIR messages from sent to in Kafa outbound stream after converting the
+     * inbound EDI messages. It is intended to be used for test/verify the Kafka stream
+     * service in this application.
      *
-     * @param topic stream topic.
-     * @param isCommitting indicates whether to commit after polling the message.
-     * @return a list of {@link EdiFhirMessage}.
-     * @throws StreamException error occurs.
      */
-    List<EdiFhirMessage> pollMessage(String topic, boolean isCommitting) throws StreamException;
+    List<EdiFhirMessage> pollMessage();
 
     /**
-     * Processes a Kafka message.
+     * Processes a Kafka message related to x12 837 transaction.
      *
-     * @param record A Kafka message record.
-     * @return a message about the processing.
+     * @param record A Kafka message record for an X12 837 transaction.
      */
-    String processMessage(ConsumerRecord<String, String> record);
+    void process837Message(ConsumerRecord<String, String> record);
+
+    /**
+     * Processes a Kafka message related to x12 835 transaction.
+     *
+     * @param record A Kafka message record for an X12 835 transaction.
+     */
+    void process835Message(ConsumerRecord<String, String> record);
+
+    /**
+     * Processes a Kafka message related to x12 834 transaction.
+     *
+     * @param record A Kafka message record for an X12 834 transaction.
+     */
+    void process834Message(ConsumerRecord<String, String> record);
+
+    /**
+     * Counts FHIR message for testing converted message sent to outbound stream.
+     *
+     * @param record a record from Kafka stream.
+     */
+    void countFhirMessage(ConsumerRecord<String, String> record);
 }
