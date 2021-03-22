@@ -89,10 +89,10 @@ public class X837Mapper {
             Loop loop1000A = headerLoop.getLoop(LOOP_1000A);
             if (loop1000A != null) {
                 Person person = PersonMapper.mapSubmitterToPerson(loop1000A);
-                result.addResource(person);
+                result.addResource(person);  // TODO: submitter needs to be mapped to Claim.enterer.
                 Loop loop1000B = headerLoop.getLoop(LOOP_1000B);
                 person = PersonMapper.mapReceiverToPerson(loop1000B);
-                result.addResource(person);
+                result.addResource(person); // TODO: should receiver be mapped to Claim.payee or insurer?
             }
 
             Loop detailLoop = loop837.getLoop(DETAIL_LOOP);
